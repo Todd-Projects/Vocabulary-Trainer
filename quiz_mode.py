@@ -86,7 +86,8 @@ def loop_quiz(gui, r_list, vocab_dict, difficulty):
             collect_data(), sys.exit()
     hold_success_stats, hold_mistakes_list = manage_mistakes()
     choose_dictionary(gui, "Wörterbuch wählen")
-    filename, img = create_badge(gui, vocab_dict)
+    #filename, img = create_badge(gui, vocab_dict)
+    filename, img = "",""
     end_gui_mode(
         gui, get_app_mode, hold_mistakes_list, hold_success_stats, filename, img
     )
@@ -107,6 +108,7 @@ def manage_mistakes():
 
 
 def create_badge(gui, vocab_dict):
+    """ unused for now as I do not yet have the images """
     percent = vocab_dict.get_percents(string=False)
     filename = f"images/{grading_dict(percent)}"
     # get the image "firstplace.png" from the folder "/images"
