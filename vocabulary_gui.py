@@ -457,7 +457,7 @@ class MainGui:
     def onselect(self, key):
         if get_app_mode() != "edit":
             for i in self.holder[0].curselection():
-                pass_line_index_to_loading(i - 2)
+                pass_line_index_to_loading(self, i - 2) if (i - 2 >= 0) else None
         elif get_app_mode() == "edit":
             for i in self.holder[1].curselection():
                 prepare_entries_for_edit(self, i - 2, "abschicken") if i > 1 else None
@@ -465,21 +465,30 @@ class MainGui:
     def clicked(self, evt=None, keyword="", wherefrom=""):
         if keyword == "beenden":
             set_app_mode_to("exit")
-            # tk.destroy()
             self.decision.set("")
             exit_app()
         elif keyword == "Wörterbuch bearbeiten" and wherefrom == "add_dict":
             self.set_accent_color(keyword)
             self.clear_textbox(0)
             self.change_return_binding()
-            self.funcs[keyword][0](self, keyword)
-        elif keyword != "beenden":
-            self.set_accent_color(keyword)
-            self.clear_textbox(0)
-            self.funcs[keyword][0](self, keyword)
+            self.funcs[keyword][0](self, keyword, wherefrom)
+        elif keyword == "abfragen":
+            self.entry_holder[0].focus_set()
+            self.forward_click(keyword)
+        else:
+            self.forward_click(keyword)
+
+    def forward_click(self, keyword=""):
+        self.set_accent_color(keyword)
+        self.clear_textbox(0)
+        self.funcs[keyword][0](self, keyword)
 
     def change_return_binding(self):
-        # set return binding to the button "zum Wörterbuch hinzufügen"
+        # TODO: set return binding to the button "zum Wörterbuch hinzufügen"
+        # if in edit mode coming from add_dict, so that the user can add
+        # the word to the dictionary by pressing return after entering
+        # the word and the translation, instead of having to click the
+        # button
         return
 
     def onclick(self, event, index):
@@ -504,8 +513,11 @@ class MainGui:
         self.textbox_holder[index].delete(1.0, END)
         self.textbox_holder[index].config(state=DISABLED)
 
-    def clear_listbox(self, index):
+    def clear_listbox(self, index, text=""):
+        self.holder[index].config(state=NORMAL)
         self.holder[index].delete(0, END)
+        self.holder[index].insert(0, text) if text else None
+        self.holder[index].config(state=DISABLED)
 
     def pack_entry_field(self, btn_num=None, key=1, state=True):
         if state == True:
@@ -527,6 +539,9 @@ class MainGui:
 class GuiActions(MainGui):
     def __init__(self):
         super().__init__()
+
+    def get_gui(self):
+        return self
 
     def set_quizmode(self, action=True):
         if action is True:
@@ -560,6 +575,7 @@ class GuiActions(MainGui):
     def populate_listbox(
         self, listbox_lines, key, listbox_index, first_line="", second_line=""
     ):
+        self.holder[listbox_index].config(state=NORMAL)
         listbox_index = self.funcs[key][2]
         self.holder[listbox_index].insert(END, first_line)
         self.holder[listbox_index].insert(END, second_line)
@@ -620,7 +636,7 @@ class GuiActions(MainGui):
 
     def set_image_to_textbox(self, textbox_index, badge):
         self.textbox_holder[textbox_index].image_create(END, image=badge)
-        self.textbox_holder[textbox_index].image=badge
+        self.textbox_holder[textbox_index].image = badge
 
     def revert_to_start(self):
         self.label_holder[0].config(text=gui_dict["labels"][0]["default"])

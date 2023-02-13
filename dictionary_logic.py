@@ -6,11 +6,7 @@ from init_app import (
     dict_obj,
     file_obj,
 )
-from helpers import (
-    get_todays_date,
-    get_filelist,
-    set_app_mode_to,
-)
+from helpers import get_todays_date, get_filelist, set_app_mode_to, is_user_stats
 
 
 def check_if_file_is_already_in_folder(file, index=None):
@@ -20,25 +16,32 @@ def check_if_file_is_already_in_folder(file, index=None):
 
 
 def check_filename_validity(filename=None, ending=None):
-    if filename is None:
-        return False
     if filename.endswith(ending) and filename.count(".") == 1:
         return filename
-    else:
+    elif filename.count(".") == 0:
         filename = f"{filename}{ending}"
-    return filename
+        return filename
+    else:
+        return False
+
+
+def collect_data():
+    if not is_vocab_dict():
+        return
+    stats = stats_holder.get_state()
+    if not stats:
+        return
+    date = get_todays_date()
+    stats.insert(0, date)
+    save_stats(stats)
 
 
 def set_stats_holder():
     stats_holder.set_state(get_vocab_object().collect_stats())
 
 
-def get_stats_holder():
-    return stats_holder.get_state()
-
-
 def save_stats(stats):
-    if not check_filename_validity("user_stats.stats", ".stats"):
+    if not is_user_stats():
         create_stats_file()
     with open("user_stats.stats", mode="a", newline="", encoding="utf-8-sig") as file:
         writer = csv.writer(file, delimiter=";")
@@ -55,7 +58,8 @@ def create_stats_file():
                 "number_of_words_per_session",
                 "correct_per_session",
                 "mistakes_per_session",
-                "wrong_words_per_session\n",
+                "wrong_words_per_session",
+                "percentages_of_correct_answers",
             ]
         )
     file.close()
@@ -204,18 +208,6 @@ def get_mistakes():
 
 def get_success_stats():
     return dict_obj.get_state().get_success_stats()
-
-
-def collect_data():
-    if not is_vocab_dict():
-        return
-    date = get_todays_date()
-    stats = get_stats_holder()
-    if not stats:
-        print("no stats available in collect data")
-        return
-    stats.insert(0, date)
-    save_stats(stats)
 
 
 def restore_app_mode(gui):

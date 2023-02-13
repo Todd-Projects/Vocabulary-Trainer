@@ -20,6 +20,13 @@ def get_filelist():
     return filelist
 
 
+def is_user_stats():
+    stats_list = []
+    for x in glob.glob("user_stats.stats", recursive=True):
+        stats_list.append(x)
+    return True if stats_list else False
+
+
 def longest_key(dictionary):
     """returns the longest key in a dictionary"""
     return len(max([x for x in dictionary.keys()], key=len))
@@ -56,3 +63,7 @@ def set_line_index_to(index):
 
 def get_line_index():
     return line_index.get_state()
+
+
+def clear_line_index():
+    line_index.set_state(False)

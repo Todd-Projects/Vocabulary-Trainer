@@ -17,25 +17,7 @@ from dictionary_logic import (
 from gui_logic import end_gui_mode, clear_entry_field, set_label_to
 
 
-def get_entry_val(gui, keyword):
-    if get_app_mode() == "edit":
-        update_dict(gui)
-    elif get_app_mode() == "add dict":
-        prepare_edit_mode(gui, "Wörterbuch bearbeiten")
-    elif get_app_mode() == "quiz":
-        gui.decision.set(keyword)
-
-
-def prepare_entries_for_edit(gui, index, key):
-    list_of_elements = get_list_of_items()
-    de_key = list_of_elements[index][0]
-    val = list_of_elements[index][1::]
-    gui.print_s(de_key, field=["entry", 0])
-    gui.print_s(",".join(val), field=["entry", 1])
-    set_line_index_to(index)
-
-
-def prepare_edit_mode(gui, key):
+def prepare_edit_mode(gui, key,wherefrom=""):
     """
     set up app for edit mode
     change textbox to listbox
@@ -51,6 +33,24 @@ def prepare_edit_mode(gui, key):
     set_app_mode_to("edit")
     set_label_to(gui, f"File: {get_filename()[0:-4]}", 0)
     update_edit_listbox(gui, listbox_index, key)
+
+
+def get_entry_val(gui, keyword):
+    if get_app_mode() == "edit":
+        update_dict(gui)
+    elif get_app_mode() == "add dict":
+        prepare_edit_mode(gui, "Wörterbuch bearbeiten",wherefrom="add_dict")
+    elif get_app_mode() == "quiz":
+        gui.decision.set(keyword)
+
+
+def prepare_entries_for_edit(gui, index, key):
+    list_of_elements = get_list_of_items()
+    de_key = list_of_elements[index][0]
+    val = list_of_elements[index][1::]
+    gui.print_s(de_key, field=["entry", 0])
+    gui.print_s(",".join(val), field=["entry", 1])
+    set_line_index_to(index)
 
 
 def update_edit_listbox(gui, listbox_index, key):
@@ -113,9 +113,12 @@ def refresh_edit_gui(gui):
 def update_dict(gui):
     entries = gui.get_entry()
     index = get_line_index()
+    if not index:
+        return
     update_vocab_dict(entries, index)
     propagate_items()
     refresh_edit_gui(gui)
+    set_line_index_to(False)
 
 
 def add_word(gui, keyword):
@@ -127,6 +130,8 @@ def add_word(gui, keyword):
 
 
 def delete_entry(gui, key=None):
+    if not get_line_index():
+        return
     delete_vocab_dict_entry(gui.get_entry(), get_line_index())
     propagate_items()
     refresh_edit_gui(gui)

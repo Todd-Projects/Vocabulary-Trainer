@@ -3,6 +3,55 @@ import copy
 import re
 
 
+class stat_counter:
+    """class to count the number of correct and wrong answers"""
+
+    def __init__(self):
+        self.correct = 0
+        self.wrong = 0
+        self.item = 0
+        self.percentage = 0
+        self.wrong_pair = {}
+
+    def get_correct(self):
+        return self.correct
+
+    def get_wrong(self):
+        return self.wrong
+
+    def get_item(self):
+        return self.item
+
+    def get_wrong_pair(self):
+        return self.wrong_pair
+
+    def get_percentage(self):
+        return round(self.percentage)
+
+    def add_correct(self):
+        self.correct += 1
+
+    def add_wrong(self):
+        self.wrong += 1
+
+    def add_item(self):
+        self.item += 1
+
+    def add_wrong_pair(self, dictionary):
+        self.wrong_pair.update(dictionary)
+
+    def add_percentage(self):
+        self.percentage = self.correct / self.item * 100
+
+    def reset(self):
+        self.correct = 0
+        self.wrong = 0
+
+
+# wc: word_counter
+wc = stat_counter()
+
+
 class Vocab:
     """
     holds, validates, and manipulates a dictionary
@@ -63,21 +112,24 @@ class Vocab:
 
 
 class VocabManipulation(Vocab):
-
-    correct_per_session = 0
-    mistakes_per_session = 0
-    mistakes_per_session_dict = {}
-    percents_per_session = []
-
-    """ manipulates a dictionary """
+    """manipulates the dictionary"""
 
     def __init__(self, v_dict=None, *args, **kwargs):
         super().__init__(v_dict, *args, **kwargs)
 
+    def check_for_difficulty(self, dict_index, user_input, difficulty):
+        if difficulty == "h":
+            ele = [x for x in self.v_dict[self.key_list[dict_index]]]
+        elif difficulty == "e":
+            ele = [x.lower() for x in self.v_dict[self.key_list[dict_index]]]
+            user_input = user_input.lower()
+        return ele, user_input
+
     def initialize_session(self):
-        self.mistakes_dict = {}
-        self.keep_score_val = 0
-        self.mistakes_no = 0
+        self.words_per_quiz = 0
+        self.mistakes_per_quiz = 0
+        self.mistakes_per_quiz_dict = {}
+        self.correct_per_quiz = 0
 
     def add_dict_items(self, dict_key, dict_vals):
         """
@@ -100,80 +152,80 @@ class VocabManipulation(Vocab):
         params: dict_index: int
         user_input: str
         """
-        is_wrong = []
+        is_correct = []
         # extract list of vals from dict-key
         ele, user_input = self.check_for_difficulty(dict_index, user_input, difficulty)
         for val in ele:
-            is_wrong.append(True) if user_input == val else is_wrong.append(False)
-        if True in is_wrong:
-            self.set_score(answer=True, dict_index=dict_index, vals=ele)
-            return self.set_score
+            is_correct.append(True) if user_input == val else is_correct.append(False)
+        if True in is_correct:
+            last_score = self.set_score(answer=True, dict_index=dict_index, vals=ele)
         else:
             last_score = self.set_score(answer=False, dict_index=dict_index, vals=ele)
-            return last_score
-
-    def check_for_difficulty(self, dict_index, user_input, difficulty):
-        if difficulty == "h":
-            ele = [x for x in self.v_dict[self.key_list[dict_index]]]
-        elif difficulty == "e":
-            ele = [x.lower() for x in self.v_dict[self.key_list[dict_index]]]
-            user_input = user_input.lower()
-        return ele, user_input
+        return last_score
 
     def set_score(self, answer, dict_index=False, vals=False):
         if answer:
-            self.keep_score_val += 1
+            self.correct_per_quiz += 1
+            wc.add_correct()
             last_score = True
-            return
         else:
-            self.mistakes_no += 1
-            self.mistakes_dict[self.key_list[dict_index]] = vals
+            self.mistakes_per_quiz += 1
+            wc.add_wrong()
+            self.mistakes_per_quiz_dict[self.key_list[dict_index]] = vals
             last_score = False
         return last_score
 
     def get_mistakes(self):
-        if self.mistakes_dict:
+        if self.mistakes_per_quiz_dict:
             answerstring = (
-                ", ".join([str(elem) for elem in self.mistakes_dict.keys()])
-                + " hattest du noch nicht richtig. \nHier sind die richtigen Antworten:"
+                ", ".join([str(elem) for elem in self.mistakes_per_quiz_dict.keys()])
+                + f" hattest du noch nicht richtig.{self.correct_per_quiz} aber schon.\nHier sind die richtigen Antworten:"
             )
-            VocabManipulation.mistakes_per_session_dict.update(self.mistakes_dict)
-            return answerstring, self.mistakes_dict, self.mistakes_dict_string()
+            wc.add_wrong_pair(self.mistakes_per_quiz_dict)
+            return (
+                answerstring,
+                self.mistakes_per_quiz_dict,
+                self.mistakes_dict_string(),
+            )
         return False, False, False
 
     def mistakes_dict_string(self):
         word, a = "", ""
-        gesamtliste = []
-        string1 = [ele for ele in list(self.mistakes_dict.keys())]
-        string2 = [ele for ele in list(self.mistakes_dict.values())]
+        complete_list = []
+        string1 = [ele for ele in list(self.mistakes_per_quiz_dict.keys())]
+        string2 = [ele for ele in list(self.mistakes_per_quiz_dict.values())]
 
         for i, val in enumerate(string2):
             word = string1[i] + ": "
             for val in string2[i]:
-                gesamtliste.append("")
+                complete_list.append("")
                 word += val + ", "
-            gesamtliste[i] = f"{word}"[0:-2]
+            complete_list[i] = f"{word}"[0:-2]
 
-        a = ".".join(gesamtliste) + " "
+        a = ".".join(complete_list) + " "
         return a if a else False
 
     def get_success_stats(self):
         return [
-            f"Du hattest {self.keep_score_val} von {self.dict_length} Wörtern richtig, das sind:",
+            f"Du hattest {self.correct_per_quiz} von {self.dict_length} Wörtern richtig, das sind:",
             self.get_percents(),
         ]
 
-    def get_percents(self,string=True):
-        return str((self.keep_score_val / self.dict_length) * 100)[0:4] + "%" if string==True else round((self.keep_score_val / self.dict_length) * 100)
+    def get_percents(self, string=True):
+        wc.add_percentage()
+        return (
+            str((self.correct_per_quiz / self.dict_length) * 100)[0:4] + "%"
+            if string == True
+            else round((self.correct_per_quiz / self.dict_length) * 100)
+        )
 
-    def get_score(self):
-        VocabManipulation.correct_per_session += self.keep_score_val
-        VocabManipulation.mistakes_per_session += self.mistakes_no
-        VocabManipulation.percents_per_session.append(self.get_percents(string=True))
-        return self.keep_score_val
+    def return_score_values(self):
+        return self.correct_per_quiz
 
     def get_prompt(self, dict_index):
         """returns a new prompt for index"""
+        self.words_per_quiz += 1
+        wc.add_item()
         return False if dict_index >= self.dict_length else self.key_list[dict_index]
 
     def update_entry(self, first_l, second_l, dict_index):
@@ -189,13 +241,11 @@ class VocabManipulation(Vocab):
         self.log_dict[first_l] = [second_l, "deleted"]
         self.v_dict.pop(first_l, False)
 
-    @staticmethod
-    def collect_stats():
+    def collect_stats(self):
         return [
-            VocabManipulation.correct_per_session
-            + VocabManipulation.mistakes_per_session,
-            VocabManipulation.correct_per_session,
-            VocabManipulation.mistakes_per_session,
-            VocabManipulation.mistakes_per_session_dict,
-            VocabManipulation.percents_per_session,
+            wc.get_item(),
+            wc.get_correct(),
+            wc.get_wrong(),
+            wc.get_wrong_pair(),
+            wc.get_percentage(),
         ]

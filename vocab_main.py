@@ -21,10 +21,9 @@ def choose_dictionary(gui, key):
     if get_app_mode() != "start":
         return
     set_app_mode_to("start")
-    gui.clear_listbox(0)
-    file_list.set_state([x for x in get_filelist()])
+    clear_listbox(gui, 0)
     gui.populate_listbox(
-        file_list.get_state(),
+        get_filelist(),
         key,
         listbox_index=0,
         first_line="Choose a dictionary",
@@ -32,13 +31,21 @@ def choose_dictionary(gui, key):
     )
 
 
-def pass_line_index_to_loading(index):
+def clear_listbox(gui, index, text=""):
+    """
+    clears the listbox at the given index
+    """
+    gui.clear_listbox(index, text)
+
+
+def pass_line_index_to_loading(gui, index):
     """
     gets the content of a line in the listbox and passes it to the loading function
     """
-    filename = file_list.get_state()[index]
+    filename = get_filelist()[index]
     if check_if_file_is_already_in_folder(filename, index):
         return
+    clear_listbox(gui, 0, f"Die Datei {filename} wurde geladen.")
     handle_loading_dict(filename, index)
 
 

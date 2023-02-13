@@ -66,7 +66,7 @@ def check_answer(gui, index, answer, vocab_dict, difficulty):
         )
     print_result_to_gui(
         gui,
-        text=f"{vocab_dict.get_score()} richtig von {vocab_dict.get_dict_length()}.",
+        text=f"{vocab_dict.return_score_values()} richtig von {vocab_dict.get_dict_length()}.\nDu bist bei Wort {index + 1}.",
         boolean=True,
         field=["label", 2],
     )
@@ -82,12 +82,20 @@ def loop_quiz(gui, r_list, vocab_dict, difficulty):
         answer = gui.wait_for_answer()
         gui.clear_entry_field(0)
         check_answer(gui, index, answer, vocab_dict, difficulty)
-        if get_app_mode() == "exit":
-            collect_data(), sys.exit()
+        exit_injection()
+    after_quiz(gui, vocab_dict)
+
+
+def exit_injection():
+    if get_app_mode() == "exit":
+        collect_data(), sys.exit()
+    return
+
+
+def after_quiz(gui, vocab_dict):
     hold_success_stats, hold_mistakes_list = manage_mistakes()
     choose_dictionary(gui, "Wörterbuch wählen")
-    #filename, img = create_badge(gui, vocab_dict)
-    filename, img = "",""
+    filename, img = create_badge(gui, vocab_dict)
     end_gui_mode(
         gui, get_app_mode, hold_mistakes_list, hold_success_stats, filename, img
     )
@@ -108,7 +116,6 @@ def manage_mistakes():
 
 
 def create_badge(gui, vocab_dict):
-    """ unused for now as I do not yet have the images """
     percent = vocab_dict.get_percents(string=False)
     filename = f"images/{grading_dict(percent)}"
     # get the image "firstplace.png" from the folder "/images"

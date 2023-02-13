@@ -51,10 +51,8 @@ def end_gui_mode(
         gui.print_s(hold_success_stats.get_state()[0], True, field=["textbox", 0])
         gui.print_s(hold_success_stats.get_state()[1], True, field=["textbox", 0])
         gui.print_s("\n", True, field=["textbox", 0])
-        # TODO: create five gif files that represent the success of the student
-        # following lines are commented out as the images have yet to be created
-        #gui.set_image_to_textbox(textbox_index=0, badge=img)
-        #gui.set_quizmode(action=False)
+        gui.set_image_to_textbox(textbox_index=0, badge=img)
+        gui.set_quizmode(action=False)
     elif get_app_mode() == "edit":
         gui.print_s("Bearbeitung beendet.", False, field=["textbox", 0])
     elif get_app_mode() == "add":

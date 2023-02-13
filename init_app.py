@@ -24,6 +24,9 @@ class Vars:
     def delete_instance(self):
         del self
 
+    def __repr__(self):
+        return f"{self.vars} is of type {type(self.vars)}"
+
 
 # hier befinden sich die aktuellen Variablen
 (
@@ -43,7 +46,7 @@ mistake_dict_counter.set_state(0)
 dict_obj.set_state("")
 file_obj.set_state("")
 app_mode.set_state("start")  # modes: "start", "quiz", "edit", "add"
-file_list.set_state("")
+file_list.set_state([])
 line_index.set_state(0)
 hold_success_stats.set_state([])
 hold_mistakes_list.set_state([])
