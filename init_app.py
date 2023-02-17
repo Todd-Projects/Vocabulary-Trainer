@@ -28,7 +28,7 @@ class Vars:
         return f"{self.vars} is of type {type(self.vars)}"
 
 
-# hier befinden sich die aktuellen Variablen
+# all current variables
 (
     mistake_dict_counter,
     stats_holder,
@@ -39,13 +39,17 @@ class Vars:
     line_index,
     hold_success_stats,
     hold_mistakes_list,
-) = (Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars())
+    app_mode_list,
+) = (Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars(), Vars())
 
 stats_holder.set_state([])
 mistake_dict_counter.set_state(0)
 dict_obj.set_state("")
 file_obj.set_state("")
-app_mode.set_state("start")  # modes: "start", "quiz", "edit", "add"
+app_mode_list.set_state(
+    ["start", "quiz", "add_dict", "edit", "exit", "add_mode", "add", "delete","loaded"]
+)
+app_mode.set_state("start")  # modes: "start", "quiz", "edit", "add", "loaded","delete","loaded"
 file_list.set_state([])
 line_index.set_state(0)
 hold_success_stats.set_state([])

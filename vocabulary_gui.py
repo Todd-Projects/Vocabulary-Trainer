@@ -1,4 +1,5 @@
 from tkinter import *
+import typing
 from tkinter import Tk
 from helpers import longest_key
 from vocab_main import (
@@ -15,10 +16,9 @@ from edit_mode import (
     add_word,
     prepare_entries_for_edit,
     delete_entry,
-    add_word,
     get_entry_val,
 )
-from add_dict import add_dict
+from add_dict import add_dict, add_mode
 
 tk = Tk()
 # could these be defined as global variables somewhere else?
@@ -43,12 +43,13 @@ def set_gui_dict():
         "neues Wörterbuch anlegen": [add_dict, 1, None, "pack", "add_dict"],
         "Wörterbuch bearbeiten": [prepare_edit_mode, 1, 1, "pack", "edit"],
         "beenden": [None, 1, None, "pack", "exit"],
-        "abschicken": [get_entry_val, 3, 1, "unpack"],
+        "abschicken": [get_entry_val, 3, 1, "unpack", "add_mode"],
         "zum Wörterbuch hinzufügen": [add_word, 3, None, "unpack", "add"],
         "löschen": [delete_entry, 3, None, "unpack", "delete"],
-        "bearbeiten beenden": [end_edit_mode, 3, None, "unpack"],
+        "bearbeiten beenden": [end_edit_mode, 3, None, "unpack", "add_mode"],
         "neu": [add_word, 3, None, "nopack"],
         "dividers": [None, None, None, "nopack", 5],
+        "add for new dict": [add_mode, 3, None, "nopack", "add_mode"],
     }
 
     gui_dict["colors"] = {
@@ -189,7 +190,7 @@ def set_gui_dict():
         },
     }
 
-    # "return" mirrors the function call from funcs, integer refers to its own key (e.g. 0)
+    # "return" mirrors the function call from funcs, integer refers to its own key (e.g. 0,1)
     gui_dict["entry_fields"] = {
         0: {
             "var": entry_var,
@@ -248,6 +249,7 @@ class MainGui:
         self.font_color = gui_dict["colors"]["light"]
         self.headline_color = gui_dict["colors"]["accent"]
         self.create_main_window()
+        self.set_icon()
 
     def create_main_window(self):
         """creates the main container for the frames"""
@@ -262,6 +264,10 @@ class MainGui:
         self.create_textboxes()
         self.create_check_button()
         tk.protocol("WM_DELETE_WINDOW", lambda m="beenden": self.clicked(keyword=m))
+
+    def set_icon(self):
+        """sets the icon for the app"""
+        tk.iconbitmap("images/vocab_trainer.ico")
 
     def create_frames(self):
         """creates the main frames of the app"""
@@ -350,10 +356,15 @@ class MainGui:
         for i, key in enumerate(list(self.funcs.keys())):
             self.pack_if_condition(i, key, "unpack")
 
-    def pack_if_condition(self, i, key, condition):
-        self.buttons_holder[i].pack(pady=5, padx=5) if self.funcs[key][
-            3
-        ] == condition else None
+    def pack_if_condition(self, i, key, condition, mode=None):
+        if not mode:
+            self.buttons_holder[i].pack(pady=5, padx=5) if self.funcs[key][
+                3
+            ] == condition else None
+        else:
+            self.buttons_holder[i].pack(pady=5, padx=5) if self.funcs[key][
+                3
+            ] == condition and self.funcs[key][4] == get_app_mode() else None
 
     def unpack_buttons_after_edit(self):
         for i, key in enumerate(list(self.funcs.keys())):
@@ -444,6 +455,12 @@ class MainGui:
             )
             self.label_holder[i].pack(fill=X, expand=True, pady=5, padx=5)
 
+    def add_mode_gui(self):
+        self.pack_entry_field(btn_num=5, key=0, state=True)
+        self.pack_entry_field(btn_num=5, key=1, state=True)
+        self.pack_if_condition(5, "abschicken", "unpack", get_app_mode())
+        self.pack_if_condition(8, "bearbeiten beenden", "unpack", get_app_mode())
+
     def set_accent_color(self, keyword):
         for i, key in enumerate(list(self.funcs.keys())):
             if self.funcs[key][3] != "pack":
@@ -455,6 +472,9 @@ class MainGui:
             )
 
     def onselect(self, key):
+        """
+        passes the selected line to the loading function either for loading or for editing
+        """
         if get_app_mode() != "edit":
             for i in self.holder[0].curselection():
                 pass_line_index_to_loading(self, i - 2) if (i - 2 >= 0) else None
@@ -462,34 +482,29 @@ class MainGui:
             for i in self.holder[1].curselection():
                 prepare_entries_for_edit(self, i - 2, "abschicken") if i > 1 else None
 
-    def clicked(self, evt=None, keyword="", wherefrom=""):
+    def clicked(self, evt=None, keyword=""):
+        """
+        passes the key of the button that was clicked to the corresponding function
+        special cases for exit and query buttons are handled here
+        """
         if keyword == "beenden":
             set_app_mode_to("exit")
             self.decision.set("")
             exit_app()
-        elif keyword == "Wörterbuch bearbeiten" and wherefrom == "add_dict":
-            self.set_accent_color(keyword)
-            self.clear_textbox(0)
-            self.change_return_binding()
-            self.funcs[keyword][0](self, keyword, wherefrom)
         elif keyword == "abfragen":
             self.entry_holder[0].focus_set()
             self.forward_click(keyword)
         else:
             self.forward_click(keyword)
 
-    def forward_click(self, keyword=""):
+    def forward_click(self, keyword):
+        """passes the key of the button that was clicked to the corresponding function
+        Args:
+            keyword (str, optional): from funcs.keys().
+        """
         self.set_accent_color(keyword)
-        self.clear_textbox(0)
+        self.clear_textbox(0) if get_app_mode() != "add_mode" else None
         self.funcs[keyword][0](self, keyword)
-
-    def change_return_binding(self):
-        # TODO: set return binding to the button "zum Wörterbuch hinzufügen"
-        # if in edit mode coming from add_dict, so that the user can add
-        # the word to the dictionary by pressing return after entering
-        # the word and the translation, instead of having to click the
-        # button
-        return
 
     def onclick(self, event, index):
         if get_app_mode() != "edit":
@@ -498,9 +513,15 @@ class MainGui:
         elif get_app_mode() == "edit":
             self.entry_holder[index].config(foreground="white")
 
-    def set_decision(self, key=None):
+    def set_decision(self, key=None) -> None:
         self.decision.set(key)
         return
+
+    def clean_up_add_dict_gui(self):
+        self.clear_label(3)
+        self.clear_label(1)
+        self.clear_textbox(0)
+        self.clear_listbox(0)
 
     def clear_entry_field(self, index):
         self.entry_holder[index].delete(0, END)
@@ -540,9 +561,6 @@ class GuiActions(MainGui):
     def __init__(self):
         super().__init__()
 
-    def get_gui(self):
-        return self
-
     def set_quizmode(self, action=True):
         if action is True:
             self.pack_if_condition(
@@ -554,7 +572,7 @@ class GuiActions(MainGui):
             for i, val in enumerate(self.entry_holder):
                 self.pack_entry_field(key=i, state=False)
 
-    def switch_to_edit_view(self, divider, id, setting):
+    def switch_to_edit_view(self, divider: int, id: list, setting=bool) -> None:
         if setting is True:
             self.textbox_holder[0].pack_forget()
             self.create_edit_view()
@@ -569,8 +587,16 @@ class GuiActions(MainGui):
             self.create_textboxes()
             self.holder[0].delete(0, END)
 
-    def set_label_to(self, string, frame):
-        self.label_holder[frame].config(text=string)
+    def switch_to_two_entry_fields(self, divider, id, create):
+        """
+        set up gui for edit mode
+        parameter create: True for entering edit mode
+        parameter create: False for leaving edit mode
+        """
+        self.manage_entry_fields(key=id[0], choice="unpack", function="quiz")
+        self.manage_entry_fields(key=id[1], choice="unpack", function="edit")
+        self.pack_entry_field(divider, key=id[0], state=True)
+        self.pack_entry_field(divider, key=id[1], state=True)
 
     def populate_listbox(
         self, listbox_lines, key, listbox_index, first_line="", second_line=""
@@ -591,7 +617,7 @@ class GuiActions(MainGui):
             return
         if get_app_mode() == "quiz":
             return gui_dict["entry_fields"][0]["var"].get()
-        elif get_app_mode() == "edit":
+        elif get_app_mode() == "edit" or get_app_mode() == "add_mode":
             fl_keys = gui_dict["entry_fields"][0]["var"].get()
             sl_keys = gui_dict["entry_fields"][1]["var"].get().split(",")
             return [fl_keys, sl_keys]
@@ -609,14 +635,16 @@ class GuiActions(MainGui):
         diff = "h" if gui_dict["check_button"][difficulty_key]["var"].get() else "e"
         return sort, diff
 
-    def print_s(self, string, type=False, field=["label", 1]):
-        """prints a string to label with index field
-        if type is True, it will append the string to the label
-        if field[0] is textbox or label, it will print to the textbox or label with list-index field[1]
-        if type is False, it will clear the textbox before printing"""
+    def print_s(self, string: str, type=False, field=["label", 1]) -> None:
+        """
+        prints a string to widget based on its index
+        if type is True, it will append the string to the label, if applicable
+        if field[0] is <widget>, it will print to the <widget> with list-index field[1]
+        if type is False, it will clear the <widget> before printing, if applicable"""
+
         if field[0] == "label" and get_app_mode != "quiz":
             self.label_holder[field[1]].config(text=string)
-        if field[0] == "label" and get_app_mode() == "quiz":
+        elif field[0] == "label" and get_app_mode() == "quiz":
             self.label_holder[field[1]].config(
                 text=string, font=self.fonts[get_app_mode()]
             )

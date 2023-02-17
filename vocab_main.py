@@ -1,6 +1,6 @@
 """contains main logic for the vocabulary trainer"""
 
-from init_app import file_list
+
 from helpers import get_filelist, set_app_mode_to, get_app_mode
 from file_handling import FileHandling
 
@@ -8,7 +8,6 @@ from file_handling import FileHandling
 from dictionary_logic import (
     collect_data,
     handle_loading_dict,
-    check_if_file_is_already_in_folder,
 )
 from init_app import *
 import sys
@@ -43,9 +42,7 @@ def pass_line_index_to_loading(gui, index):
     gets the content of a line in the listbox and passes it to the loading function
     """
     filename = get_filelist()[index]
-    if check_if_file_is_already_in_folder(filename, index):
-        return
-    clear_listbox(gui, 0, f"Die Datei {filename} wurde geladen.")
+    clear_listbox(gui, 0, f"File '{filename}' loaded.")
     handle_loading_dict(filename, index)
 
 

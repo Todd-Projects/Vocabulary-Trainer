@@ -5,9 +5,6 @@ import csv
 
 
 class FileHandling:
-
-    keep_count = []
-
     def __init__(self):
         """
         __init__ _summary_
@@ -18,11 +15,6 @@ class FileHandling:
         self.dictionary = {}
         self.filename = None
         self.list_of_items = None
-
-    @staticmethod
-    def get_all_files():
-        """gets all filenames from keep_count"""
-        return FileHandling.keep_count
 
     def set_filename(self, filename):
         """sets filename"""
@@ -75,4 +67,23 @@ class FileHandling:
             for line in vocabulary:
                 a = line.pop(0)
                 self.dictionary[a] = line
-        FileHandling.keep_count.append(self.filename)
+    
+    def delete_self(self):
+        """deletes instance"""
+        del self
+
+class MistakesDict(FileHandling):
+    def __init__(self, filename, dictionary):
+        super().__init__()
+        self.filename = filename
+        self.dictionary = dictionary
+
+    def save_mistakes_filehandler(self):
+        """creates a filehandler instance for the mistakes dictionary"""
+        self.save_file()
+    
+    def delete_self(self):
+        """deletes instance"""
+        del self
+    
+

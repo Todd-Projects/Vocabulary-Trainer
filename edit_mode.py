@@ -14,33 +14,42 @@ from dictionary_logic import (
     refresh_stats,
     get_filename,
 )
-from gui_logic import end_gui_mode, clear_entry_field, set_label_to
+from gui_logic import end_gui_mode
 
 
-def prepare_edit_mode(gui, key,wherefrom=""):
+def prepare_edit_mode(gui, key):
     """
     set up app for edit mode
     change textbox to listbox
-    change frame 3 for buttons and entry fields
+    change frame 3 for buttons and two entry fields
     get list for listbox
     """
-    if get_app_mode() != "start":
+    if get_app_mode() != "loaded":
         return
+    set_app_mode_to("start")
     listbox_index, quiz_field, edit_field, divider = get_gui_variables(gui)
-    change_gui_for_edit_mode(
-        gui, divider, id=[quiz_field, edit_field], create=True
-    ) if get_app_mode() != "edit" else None
+    id = [quiz_field, edit_field]
+    if get_app_mode() == "edit":
+        gui.switch_to_two_entry_fields(divider, id, create=True)
+        gui.switch_to_edit_view(divider, id, create=True)
     set_app_mode_to("edit")
-    set_label_to(gui, f"File: {get_filename()[0:-4]}", 0)
+    gui.print_s(f"File: {get_filename()[0:-4]}", type=False, field=["label", 0])
     update_edit_listbox(gui, listbox_index, key)
 
 
-def get_entry_val(gui, keyword):
+def get_entry_val(gui, keyword: str) -> None:
+    """function is called from the button "abschicken"
+    Args:
+        gui (gui-instance)
+        keyword (str): name of the button ("abschicken")
+    """
     if get_app_mode() == "edit":
         update_dict(gui)
-    elif get_app_mode() == "add dict":
-        prepare_edit_mode(gui, "Wörterbuch bearbeiten",wherefrom="add_dict")
+    elif get_app_mode() == "add_dict":
+        gui.decision.set(keyword)
     elif get_app_mode() == "quiz":
+        gui.decision.set(keyword)
+    elif get_app_mode() == "add_mode":
         gui.decision.set(keyword)
 
 
@@ -70,23 +79,10 @@ def get_gui_variables(gui):
     return listbox_index, quiz_field, edit_field, divider
 
 
-def change_gui_for_edit_mode(gui, divider, id, create):
-    """
-    set up gui for edit mode
-    parameter create: True for entering edit mode
-    parameter create: False for leaving edit mode
-    """
-    gui.switch_to_edit_view(divider, id, create)
-    gui.manage_entry_fields(key=id[0], choice="unpack", function="quiz")
-    gui.manage_entry_fields(key=id[1], choice="unpack", function="edit")
-    gui.pack_entry_field(divider, key=id[0], state=True)
-    gui.pack_entry_field(divider, key=id[1], state=True)
-
-
 def display_list_of_items_in_listbox(gui, listbox_index, listbox_lines, key):
     """display list of items in listbox"""
-    first = "Eintrag zum Bearbeiten oder Löschen auswählen"
-    second = "oder neue Einträge hinzufügen."
+    first = "Choose entry for editing or deletion"
+    second = "or add new entry"
     gui.populate_listbox(
         listbox_lines, key, listbox_index, first_line=first, second_line=second
     )
@@ -104,10 +100,11 @@ def refresh_listbox(gui):
     gui.clear_listbox(1)
 
 
-def refresh_edit_gui(gui):
+def refresh_edit_gui(gui, text: str) -> None:
     refresh_listbox(gui)
-    update_edit_listbox(gui, 1, "Wörterbuch bearbeiten")
-    clear_entry_field(gui)
+    update_edit_listbox(gui, listbox_index=1, text=text)
+    gui.clear_entry_field(0)
+    gui.clear_entry_field(1)
 
 
 def update_dict(gui):
@@ -121,12 +118,15 @@ def update_dict(gui):
     set_line_index_to(False)
 
 
-def add_word(gui, keyword):
+def add_word(gui, entry):
     """add entry in edit mode"""
-    entry = gui.get_entry()
+    if get_app_mode()=="loaded":
+        set_app_mode_to("start")
+    if get_app_mode == "edit":
+        entry = gui.get_entry()
+        refresh_edit_gui(gui, text="Edit dictionary")
     add_word_to_vocab_dict(entry[0], entry[1])
     propagate_items()
-    refresh_edit_gui(gui)
 
 
 def delete_entry(gui, key=None):
@@ -138,9 +138,14 @@ def delete_entry(gui, key=None):
 
 
 def end_edit_mode(gui, key):
-    gui.switch_to_edit_view(setting=False, id=[0, 1], divider=False)
-    end_gui_mode(gui, get_app_mode, hold_mistakes_list=[], hold_success_stats=[])
-    if get_app_mode == "exit":
+    if get_app_mode()=="edit":
+        gui.switch_to_edit_view(setting=False, id=[0, 1], divider=False)
+    end_gui_mode(gui, get_app_mode, set_app_mode_to, hold_mistakes_list=[], hold_success_stats=[])
+    if get_app_mode() == "exit":
         print("Exiting is not implemented in edt_mode yet.")
-    refresh_stats()
-    restore_app_mode(gui)
+    elif get_app_mode() == "edit":
+        refresh_stats()
+        restore_app_mode(gui)
+    elif get_app_mode() == "add_mode":
+        # TODO: implementing the end of add_mode
+        set_app_mode_to("start")

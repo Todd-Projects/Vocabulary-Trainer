@@ -1,2 +1,6 @@
 ﻿day_of_session;number_of_words_per_session;correct_per_session;mistakes_per_session;wrong_words_per_session;percentages_of_correct_answers
-13.02.2023;15;9;6;{'deutsch': ['german'], 'hinzufügen': ['add'], 'neu': ['new'], 'abfragen': ['quiz'], 'anlegen': ['create', 'apply'], 'streng': ['strict']};60
+16.02.2023;3;2;1;{'new dictionary': ['neues wörterbuch']};67
+16.02.2023;5;4;1;{'drittes': ['third']};80
+17.02.2023;5;3;2;{'viertes': ['fourth'], 'fünftes': ['fifth']};60
+17.02.2023;5;3;2;{'viertes': ['fourth'], 'fünftes': ['fifth']};60
+17.02.2023;5;3;2;{'viertes': ['fourth'], 'fünftes': ['fifth']};60

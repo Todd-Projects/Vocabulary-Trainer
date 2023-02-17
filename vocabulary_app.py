@@ -77,9 +77,9 @@ class Vocab:
         self.make_key_list()
         self.dict_length = len(self.v_dict)
 
-    def set_dict(self, dict):
+    def set_dict(self, dictionary):
         """sets the dictionary"""
-        self.v_dict = dict
+        self.v_dict = dictionary
 
     def get_dict(self):
         """returns the dictionary"""
@@ -113,6 +113,19 @@ class Vocab:
 
 class VocabManipulation(Vocab):
     """manipulates the dictionary"""
+
+    number_dict = {
+        0: "",
+        1: "one",
+        2: "two",
+        3: "three",
+        4: "four",
+        5: "five",
+        6: "six",
+        7: "seven",
+        8: "eight",
+        9: "nine",
+    }
 
     def __init__(self, v_dict=None, *args, **kwargs):
         super().__init__(v_dict, *args, **kwargs)
@@ -179,7 +192,7 @@ class VocabManipulation(Vocab):
         if self.mistakes_per_quiz_dict:
             answerstring = (
                 ", ".join([str(elem) for elem in self.mistakes_per_quiz_dict.keys()])
-                + f" hattest du noch nicht richtig.{self.correct_per_quiz} aber schon.\nHier sind die richtigen Antworten:"
+                + f" were not correct.{self.get_word(self.correct_per_quiz)}\nHere are the correct translations:"
             )
             wc.add_wrong_pair(self.mistakes_per_quiz_dict)
             return (
@@ -188,6 +201,15 @@ class VocabManipulation(Vocab):
                 self.mistakes_dict_string(),
             )
         return False, False, False
+
+    @staticmethod
+    def get_word(number):
+        # gets an integer and looks up the word for it in the dict
+        return (
+            VocabManipulation.number_dict[number]
+            if number in VocabManipulation.number_dict.keys()
+            else "Many others were fine, though."
+        )
 
     def mistakes_dict_string(self):
         word, a = "", ""
@@ -207,7 +229,7 @@ class VocabManipulation(Vocab):
 
     def get_success_stats(self):
         return [
-            f"Du hattest {self.correct_per_quiz} von {self.dict_length} Wörtern richtig, das sind:",
+            f"You got {self.correct_per_quiz} of {self.dict_length} Words correct. \nThat's:",
             self.get_percents(),
         ]
 
@@ -249,3 +271,6 @@ class VocabManipulation(Vocab):
             wc.get_wrong_pair(),
             wc.get_percentage(),
         ]
+    
+    def delete_instance(self):
+        del self

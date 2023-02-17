@@ -1,48 +1,59 @@
 from helpers import (
     get_app_mode,
     set_app_mode_to,
+    check_filename,
+    get_filelist
 )
 from dictionary_logic import (
     create_new_dict,
-    check_if_file_is_already_in_folder,
-    check_filename_validity,
 )
+from edit_mode import add_word
+from quiz_mode import exit_injection
 
 
 def add_dict(gui, key):
     if get_app_mode() != "start":
         return
     create_add_dict_gui(gui, key)
+    get_new_filename(gui, key)
+
 
 def create_add_dict_gui(gui, key):
-    set_app_mode_to("add_dict")
     gui.set_quizmode(action=True)
-    gui.set_label_to("Wörterbuch hinzufügen", 3)
-    gui.set_label_to("Gebe einen Namen \nfür das Wörterbuch ein\n[name.csv]:", 1)
+    gui.print_s("Add a new dictionary", type=False, field=["label", 3])
+    gui.print_s(
+        "Enter a name \nfor the dictionary\n[name.csv]:", type=False, field=["label", 1]
+    )
     gui.clear_entry_field(0)
-    get_new_filename(gui,key)
+    gui.print_s("name.csv", type=False, field=["entry", 0])
 
-def get_new_filename(gui,key):
+
+def get_new_filename(gui, key):
+    set_app_mode_to("add_dict")
     filename = gui.wait_for_answer()
-    gui.clear_entry_field(0)
-    if check_if_file_is_already_in_folder(filename):
-        gui.print_s(
-            "Wörterbuch existiert bereits.\nGebe einen anderen Namen ein.",
-            True,
-            field=["textbox", 0],
-        )
+    checked_name = check_filename(filename, ".csv")
+    if not checked_name or checked_name in get_filelist():
+        gui.print_s("Invalid filename", type=False, field=["textbox", 0])
+        gui.clear_entry_field(0)
         set_app_mode_to("start")
         add_dict(gui, key)
-    elif filename == "":
-        set_app_mode_to("start")
-        add_dict(gui, key)
-    checked_name = check_filename_validity(filename, ".csv")
-    if not checked_name:
-        set_app_mode_to("start"), add_dict(gui, key)
-    set_app_mode_to("start")
+
+    set_app_mode_to("add_dict"),
     create_new_dict(checked_name, {})
-    gui.clear_label(3)
-    gui.clear_label(1)
-    gui.clear_textbox(0)
-    gui.clear_listbox(0)
-    gui.clicked(keyword="Wörterbuch bearbeiten",wherefrom = "add_dict")
+    gui.clean_up_add_dict_gui()
+    set_app_mode_to("add_mode")
+    gui.add_mode_gui()
+    add_mode(gui, key)
+
+
+def add_mode(gui, key):
+    # TODO: add new items to the dictionary
+    # TODO: needs its own gui-mode
+    gui.print_s("Add new words to the dictionary", type=True, field=["textbox", 0])
+    while get_app_mode() == "add_mode":
+        entry = gui.wait_for_answer()
+        add_word(gui, entry) if entry else None
+        gui.print_s(f"{entry[0]}: " + " ".join(entry[1]), True, field=["textbox", 0]) if entry else None
+        gui.clear_entry_field(0)
+        gui.clear_entry_field(1)
+        exit_injection()

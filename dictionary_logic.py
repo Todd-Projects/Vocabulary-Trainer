@@ -1,28 +1,18 @@
 from vocabulary_app import VocabManipulation
 from file_handling import FileHandling, csv
+from file_handling import MistakesDict
 from init_app import (
     stats_holder,
     delete_all_variables,
     dict_obj,
     file_obj,
 )
-from helpers import get_todays_date, get_filelist, set_app_mode_to, is_user_stats
-
-
-def check_if_file_is_already_in_folder(file, index=None):
-    if file in FileHandling.keep_count:
-        return True
-    return False
-
-
-def check_filename_validity(filename=None, ending=None):
-    if filename.endswith(ending) and filename.count(".") == 1:
-        return filename
-    elif filename.count(".") == 0:
-        filename = f"{filename}{ending}"
-        return filename
-    else:
-        return False
+from helpers import (
+    get_todays_date,
+    get_filelist,
+    set_app_mode_to,
+    is_user_stats,
+)
 
 
 def collect_data():
@@ -76,7 +66,7 @@ def create_new_dict(filename, dictionary):
         dict_choice (list): _description_
         dictionary (list): _description_
     """
-
+    delete_instances()
     create_new_vocab_dict(dictionary)
     create_new_file_object()
     set_filename_to_file_object(filename)
@@ -93,20 +83,20 @@ def handle_loading_dict(filename, index=None):  # index is currently not used
     set_filename_to_file_object(filename)
     load_dictionary()
     create_new_vocab_dict(get_dictionary())
+    set_app_mode_to("loaded")
 
 
 def save_mistakes_filehandler(m_dict):
     """creates a filehandler instance for the mistakes dictionary"""
+    delete_instances()
     num = check_for_mistakes_file()
     num += 1 if num else 1
     if num < 10:
         num = f"0{num}"
-    create_new_file_object()
-    set_filename_to_file_object(
-        f"{get_todays_date().replace('.','-')}-{str(num)}-mistakes.csv"
-    )
-    set_outside_dictionary_to_file_instance(m_dict)
-    save_file_object_instance()
+    mistakes_file = MistakesDict(f"{get_todays_date().replace('.','-')}-{str(num)}-mistakes.csv",m_dict)
+    mistakes_file.save_mistakes_filehandler()
+    mistakes_file.delete_self()
+    del mistakes_file
 
 
 def check_for_mistakes_file():
@@ -127,9 +117,12 @@ def save_new_words():
 
 def delete_instances():
     """
-    used to delete instances from lists now unused, but might be used again in the future
+    TODO: check if this works
     """
-    pass
+    dict_obj.get_state().delete_self()
+    dict_obj.delete_instance()
+    file_obj.get_state().delete_self()
+    file_obj.delete_instance()
 
 
 def add_word_to_vocab_dict(first_lang, second_lang):

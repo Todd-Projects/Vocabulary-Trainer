@@ -14,7 +14,6 @@ from helpers import (
 )
 from gui_logic import (
     prepare_gui_for_quiz,
-    print_result_to_gui,
     end_gui_mode,
     display_question,
 )
@@ -27,8 +26,9 @@ import sys
 
 
 def get_quiz_type(gui, key):
-    if not is_vocab_dict() or get_app_mode() != "start":
+    if not is_vocab_dict() or get_app_mode() != "loaded":
         return
+    set_app_mode_to("start")
     quiztype, difficulty = prepare_gui_for_quiz(gui)
     set_app_mode_to("quiz")
     start_training(gui, quiztype, get_vocab_object(), difficulty)
@@ -47,27 +47,23 @@ def initialize_loop_list(gui, quiztype, vocab_dict):
     r_list = [x for x in range(0, vocab_dict.get_dict_length())]
     random.shuffle(r_list) if quiztype == "z" else None
     gui.print_s(
-        f"Quizmodus aktiviert. \nLerne {len(r_list)} Vokabeln", True, field=["label", 2]
+        f"You're in Quizmode. \nTest these {len(r_list)} items", True, field=["label", 2]
     )
     return r_list
 
 
 def check_answer(gui, index, answer, vocab_dict, difficulty):
     if vocab_dict.is_correct(index, answer, difficulty):
-        print_result_to_gui(
-            gui, text=f"'{answer}' ist richtig! ", boolean=True, field=["textbox", 0]
-        )
+        gui.print_s(string=f"'{answer}' is correct! ", type=True, field=["textbox", 0])
     else:
-        print_result_to_gui(
-            gui,
-            text=f"'{answer}' war leider falsch.",
-            boolean=True,
+        gui.print_s(
+            string=f"'{answer}' was wrong :(.",
+            type=True,
             field=["textbox", 0],
         )
-    print_result_to_gui(
-        gui,
-        text=f"{vocab_dict.return_score_values()} richtig von {vocab_dict.get_dict_length()}.\nDu bist bei Wort {index + 1}.",
-        boolean=True,
+    gui.print_s(
+        string=f"{vocab_dict.return_score_values()} correct out of {vocab_dict.get_dict_length()}.\nThis is item #{index + 1}.",
+        type=True,
         field=["label", 2],
     )
 
@@ -78,8 +74,10 @@ def loop_quiz(gui, r_list, vocab_dict, difficulty):
     params: r_list (list): random or in order, list of integers
     """
     for index in r_list:
+        answer = ""
         display_question(gui, index, vocab_dict)
-        answer = gui.wait_for_answer()
+        while not answer:
+            answer = gui.wait_for_answer()
         gui.clear_entry_field(0)
         check_answer(gui, index, answer, vocab_dict, difficulty)
         exit_injection()
@@ -97,7 +95,13 @@ def after_quiz(gui, vocab_dict):
     choose_dictionary(gui, "Wörterbuch wählen")
     filename, img = create_badge(gui, vocab_dict)
     end_gui_mode(
-        gui, get_app_mode, hold_mistakes_list, hold_success_stats, filename, img
+        gui,
+        get_app_mode,
+        set_app_mode_to,
+        hold_mistakes_list,
+        hold_success_stats,
+        filename,
+        img,
     )
     refresh_stats()
     restore_app_mode(gui)
@@ -110,7 +114,7 @@ def manage_mistakes():
         hold_mistakes_list.set_state([answerstring, wrong_items])
         save_mistakes_filehandler(m_dict)
     else:
-        hold_mistakes_list.set_state(["Perfekt!", "Keine Fehler gemacht!"])
+        hold_mistakes_list.set_state(["Perfect!", "No mistakes!"])
     hold_success_stats.set_state(get_success_stats())
     return hold_success_stats, hold_mistakes_list
 
